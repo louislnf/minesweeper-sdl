@@ -22,18 +22,20 @@ class Minesweeper {
   static Minesweeper CreateForTests(std::vector<std::vector<bool>> mines);
 
   // Reveals the field from the cell in position (row,col).
-  // Returns true if the cell is mined.
-  bool Reveal(int row, int col);
+  void Reveal(int row, int col);
 
   // Toggles the flag on the cell in position (row, col).
   // Returns true if the cell was flaggable.
-  bool ToggleFlag(int row, int col);
+  void ToggleFlag(int row, int col);
 
   // Returns the size of the mine field (rows, cols).
   std::pair<int, int> GetFieldSize() const;
 
   // Returns a view of the current mine field.
   FieldView GetFieldView() const;
+
+  // Returns whether the game is over.
+  bool IsGameOver() const;
 
  private:
   struct Cell {
@@ -45,6 +47,9 @@ class Minesweeper {
   using Cells = std::vector<std::vector<Cell>>;
 
   explicit Minesweeper(Cells cells) : cells_(std::move(cells)){};
+
+  // Game over.
+  void GameOver();
 
   // Populate the neighbour_mines attribute of each Cell in the cells_
   // attribute.
@@ -62,6 +67,7 @@ class Minesweeper {
   CellView GetCellView(const Cell& cell) const;
 
   Cells cells_;
+  bool game_over_ = false;
 };
 
 }  // namespace minesweeper

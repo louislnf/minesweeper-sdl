@@ -63,6 +63,9 @@ class MinesweeperUI {
   }
 
   void HandleLeftClick(int x, int y) {
+    if (game_.IsGameOver()) {
+      return;
+    }
     int r = x / cell_size_;
     int c = y / cell_size_;
     game_.Reveal(r, c);
@@ -70,6 +73,9 @@ class MinesweeperUI {
   }
 
   void HandleRightClick(int x, int y) {
+    if (game_.IsGameOver()) {
+      return;
+    }
     int r = x / cell_size_;
     int c = y / cell_size_;
     game_.ToggleFlag(r, c);

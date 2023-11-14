@@ -83,16 +83,31 @@ Minesweeper Minesweeper::CreateForTests(std::vector<std::vector<bool>> mines) {
   return m;
 }
 
-bool Minesweeper::Reveal(int row, int col) {
+void Minesweeper::GameOver() {
+  game_over_ = true;
+  // Reveal all mines.
+  for (std::vector<Cell>& row : cells_) {
+    for (Cell& cell : row) {
+      if (cell.mined) {
+        cell.revealed = true;
+      }
+    }
+  }
+}
+
+void Minesweeper::Reveal(int row, int col) {
+  if (IsGameOver()) {
+    return;
+  }
   cells_[row][col].revealed = true;
   if (cells_[row][col].mined) {
-    return true;
+    GameOver();
+    return;
   }
   if (cells_[row][col].neighbour_mines > 0) {
-    return false;
+    return;
   }
   RevealRec(row, col, true);
-  return false;
 }
 
 void Minesweeper::RevealRec(int row, int col, bool is_origin = false) {
@@ -115,13 +130,17 @@ void Minesweeper::RevealRec(int row, int col, bool is_origin = false) {
   }
 }
 
-bool Minesweeper::ToggleFlag(int row, int col) {
+void Minesweeper::ToggleFlag(int row, int col) {
+  if (IsGameOver()) {
+    return;
+  }
   if (cells_[row][col].revealed) {
-    return false;
+    return;
   }
   cells_[row][col].flagged = !cells_[row][col].flagged;
-  return true;
 }
+
+bool Minesweeper::IsGameOver() const { return game_over_; }
 
 std::pair<int, int> Minesweeper::GetFieldSize() const {
   return std::make_pair<int, int>(cells_.size(), cells_[0].size());
