@@ -15,11 +15,20 @@ bool CoordinatesAreInTable(int row, int col, int max_rows, int max_cols) {
 }
 
 std::vector<std::pair<int, int>> ListNeighbours(int row, int col, int max_rows,
-                                                int max_cols) {
+                                                int max_cols,
+                                                bool with_corners) {
   std::vector<std::pair<int, int>> neighbours{
-      {row - 1, col - 1}, {row - 1, col}, {row - 1, col + 1},  //
-      {row, col - 1},     {row, col + 1},                      //
-      {row + 1, col - 1}, {row + 1, col}, {row + 1, col + 1}};
+      {row - 1, col},
+      {row, col - 1},
+      {row, col + 1},
+      {row + 1, col},
+  };
+  if (with_corners) {
+    neighbours.push_back(std::make_pair<int, int>(row - 1, col - 1));
+    neighbours.push_back(std::make_pair<int, int>(row - 1, col + 1));
+    neighbours.push_back(std::make_pair<int, int>(row + 1, col - 1));
+    neighbours.push_back(std::make_pair<int, int>(row + 1, col + 1));
+  }
   std::erase_if(neighbours, [&](const std::pair<int, int>& coord) {
     return !CoordinatesAreInTable(coord.first, coord.second, max_rows,
                                   max_cols);
@@ -53,7 +62,9 @@ Minesweeper Minesweeper::Create(int rows, int cols, int mines) {
     cells[row][col].mined = true;
     --mines;
   }
-  return Minesweeper(std::move(cells));
+  Minesweeper m(std::move(cells));
+  m.PopulateNeighbourMines();
+  return m;
 }
 
 Minesweeper Minesweeper::CreateForTests(std::vector<std::vector<bool>> mines) {
@@ -77,6 +88,9 @@ bool Minesweeper::Reveal(int row, int col) {
   if (cells_[row][col].mined) {
     return true;
   }
+  if (cells_[row][col].neighbour_mines > 0) {
+    return false;
+  }
   RevealRec(row, col, true);
   return false;
 }
@@ -87,8 +101,11 @@ void Minesweeper::RevealRec(int row, int col, bool is_origin = false) {
     return;
   }
   cell.revealed = true;
-  std::vector<std::pair<int, int>> unrevealed_neighbours =
-      ListNeighbours(row, col, cells_.size(), cells_[0].size());
+  if (cell.neighbour_mines > 0) {
+    return;
+  }
+  std::vector<std::pair<int, int>> unrevealed_neighbours = ListNeighbours(
+      row, col, cells_.size(), cells_[0].size(), /*with_corners=*/false);
   std::erase_if(unrevealed_neighbours,
                 [this](const std::pair<int, int>& coord) {
                   return cells_[coord.first][coord.second].revealed;
@@ -136,7 +153,7 @@ int Minesweeper::CountNeighbourMines(int row, int col) {
   const int max_rows = cells_.size();
   const int max_cols = cells_.front().size();
   const std::vector<std::pair<int, int>> neighbours =
-      ListNeighbours(row, col, max_rows, max_cols);
+      ListNeighbours(row, col, max_rows, max_cols, /*with_corners=*/true);
   return std::count_if(neighbours.begin(), neighbours.end(),
                        [this](const std::pair<int, int>& coord) {
                          return cells_[coord.first][coord.second].mined;
@@ -148,14 +165,14 @@ Minesweeper::CellView Minesweeper::GetCellView(const Cell& cell) const {
   if (cell.revealed) {
     if (cell.mined) {
       cell_view.type = CellType::kMined;
-    } else if (cell.flagged) {
-      cell_view.type = CellType::kFlagged;
     } else {
       cell_view.type = CellType::kRevealed;
       if (cell.neighbour_mines > 0) {
         cell_view.neighbour_mines = cell.neighbour_mines;
       }
     }
+  } else if (cell.flagged) {
+    cell_view.type = CellType::kFlagged;
   }
   return cell_view;
 }
