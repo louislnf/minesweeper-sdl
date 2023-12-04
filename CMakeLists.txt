@@ -32,15 +32,15 @@ target_link_libraries(
   game
 )
 
-add_subdirectory(../SDL SDL EXCLUDE_FROM_ALL)
+find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
+find_package(SDL3_ttf REQUIRED)
 
 add_executable(
   minesweeper
   main.cc
 )
 
-target_link_libraries(minesweeper PRIVATE SDL3::SDL3 game)
-target_include_directories(minesweeper PRIVATE "F:/Development/SDL/include")
+target_link_libraries(minesweeper PRIVATE SDL3::SDL3 SDL3_ttf::SDL3_ttf game)
 
 
 include(GoogleTest)
